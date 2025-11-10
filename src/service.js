@@ -1,12 +1,16 @@
+import dotenv from "dotenv"
+dotenv.config();
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_API_KEY, SUPABASE_API_URL } from "./constant.js";
 
-const supabase = createClient(SUPABASE_API_URL, SUPABASE_API_KEY);
+const supabase = createClient(process.env.SUPABASE_API_URL, process.env.SUPABASE_API_KEY);
 
 export const getAllTodos = async () => {
   try {
     let { data, error } = await supabase.from("todos").select("*");
-    if (error) console.log(error.message);
+    if (error) {
+      console.log(error.message);
+      return "Failed to fetch todo.";
+    }
     return data;
   } catch (error) {
     console.log(error.message);
@@ -20,7 +24,10 @@ export const addTodo = async ({ task, complete = false, dueDate = null }) => {
       .from("todos")
       .insert([{ task, complete, dueDate }])
       .select();
-    if (error) console.log(error.message);
+    if (error) {
+      console.log(error.message);
+      return "Failed to add todo.";
+    }
     return "todo add successfully";
   } catch (error) {
     console.log(error.message);
@@ -28,12 +35,12 @@ export const addTodo = async ({ task, complete = false, dueDate = null }) => {
   }
 };
 
-export const deleteTodoById = async (id) => {
+export const deleteTodoById = async ({ids}) => {
   try {
     const { data, error } = await supabase
       .from("todos")
       .delete()
-      .eq("id", id)
+      .in("id", ids)
       .select("*");
     if (error) console.log(error.message);
     return "todo delete successfully";
@@ -43,7 +50,7 @@ export const deleteTodoById = async (id) => {
   }
 };
 
-export const searchTodo = async ({searchText = "", filters = {}}) => {
+export const searchTodo = async ({ searchText = "", filters = {} }) => {
   try {
     const { complete, dueDate } = filters;
 
@@ -64,8 +71,7 @@ export const searchTodo = async ({searchText = "", filters = {}}) => {
       console.log(error.message);
       return [];
     }
-    console.log("data:::", data);
-    
+
     return data || [];
   } catch (error) {
     console.log(error.message);
@@ -73,13 +79,12 @@ export const searchTodo = async ({searchText = "", filters = {}}) => {
   }
 };
 
-export const updateTodoStatus = async ({id, complete}) => {
-  
+export const updateTodoStatus = async ({ ids, complete }) => {
   try {
     const { data, error } = await supabase
       .from("todos")
       .update({ complete })
-      .eq("id", id)
+      .in('id', ids)
       .select("*");
 
     if (error) {
@@ -97,13 +102,12 @@ export const updateTodoStatus = async ({id, complete}) => {
   }
 };
 
-export const updateTodoDueDate = async ({id, dueDate}) => {
-  
+export const updateTodoDueDate = async ({ ids, dueDate }) => {
   try {
     const { data, error } = await supabase
       .from("todos")
       .update({ dueDate })
-      .eq("id", id)
+      .in('id', ids)
       .select("*");
 
     if (error) {
@@ -118,5 +122,47 @@ export const updateTodoDueDate = async ({id, dueDate}) => {
   } catch (error) {
     console.log(error.message);
     return "Error while updating todo status.";
+  }
+};
+
+
+// role = user | model 
+// message_type = input | output | action | observation
+export const addChatMessage = async ({
+  role,
+  message_type,
+  content,
+  session_id = 1,
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .insert([{ session_id, role, message_type, content }])
+      .select();
+    if (error) {
+      console.log(error.message);
+      return "Failed to add chat message.";
+    }
+    return "todo add successfully";
+  } catch (error) {
+    console.log(error.message);
+    return "failed to add todo";
+  }
+};
+
+export const getPreviousChat = async () => {
+  try {
+    let { data, error } = await supabase
+      .from("chat_messages")
+      .select(`role, content`)
+      .order("id", { ascending: false })
+    if (error) {
+      console.log(error.message);
+      return "Failed to fetch previous chat";
+    }
+    return data ? data.reverse() : [];
+  } catch (error) {
+    console.log(error.message);
+    return "error while fetching todos";
   }
 };
