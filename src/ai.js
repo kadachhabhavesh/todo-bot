@@ -1,6 +1,8 @@
 import dotenv from "dotenv"
 dotenv.config();
-
+import readlineSync from "readline-sync";
+import { tools } from "./tools.js";
+import { addChatMessage } from "./service.js";
 import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -28,7 +30,7 @@ export const generateContent = async () => {
       contents: formatted,
     });
     let outputText = response.candidates[0].content.parts[0].text;
-    console.log("::LLM::"+outputText);
+    // console.log("::LLM::"+outputText);
 
     if (!outputText) {
       throw new Error("no text found in response.");
@@ -40,3 +42,57 @@ export const generateContent = async () => {
     throw error;
   }
 };
+
+export const handleUserInput = async (userInput) => {
+  while (true) {
+    // const userInput = readlineSync.question("You >>> ");
+    await addChatMessage({
+      role: "user",
+      message_type: "input",
+      content: userInput,
+    });
+
+    while (true) {
+      const result = await generateContent();
+      const action = result;
+
+      if (action.type === "output") {
+        await addChatMessage({
+          role: "model",
+          message_type: "output",
+          content: action,
+        });
+        // console.log(`Bot >>> ${action.output}`);
+        return action.output
+        break;
+      } else if (action.type === "action") {
+        await addChatMessage({
+          role: "model",
+          message_type: "action",
+          content: action,
+        });
+        const fn = tools[action.function];
+        if (!fn) {
+          console.log("Invalid function call:", action.function);
+          break;
+        }
+
+        try {
+          const observation = await fn(action.input);
+          const observationMessage = {
+            type: "observation",
+            observation: observation,
+          };
+          await addChatMessage({
+            role: "user",
+            message_type: "observation",
+            content: observationMessage,
+          });
+        } catch (error) {
+          console.error("Error during tool execution:", error);
+          break;
+        }
+      }
+    }
+  }
+}

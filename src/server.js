@@ -1,59 +1,24 @@
-import readlineSync from "readline-sync";
-import { tools } from "./tools.js";
-import { addChatMessage } from "./service.js";
-import { generateContent } from "./ai.js";
+import express from "express";
+import ServerlessHttp from "serverless-http";
+import { handleUserInput } from "./ai.js";
+import { formateResponse } from "./util.js";
 
-async function main() {
-  while (true) {
-    const input = readlineSync.question("You >>> ");
-    await addChatMessage({
-      role: "user",
-      message_type: "input",
-      content: input,
-    });
+const app = express();
 
-    while (true) {
-      const result = await generateContent();
-      const action = result;
+app.use(express.json());
 
-      if (action.type === "output") {
-        await addChatMessage({
-          role: "model",
-          message_type: "output",
-          content: action,
-        });
-        console.log(`Bot >>> ${action.output}`);
-        break;
-      } else if (action.type === "action") {
-        await addChatMessage({
-          role: "model",
-          message_type: "action",
-          content: action,
-        });
-        const fn = tools[action.function];
-        if (!fn) {
-          console.log("Invalid function call:", action.function);
-          break;
-        }
-
-        try {
-          const observation = await fn(action.input);
-          const observationMessage = {
-            type: "observation",
-            observation: observation,
-          };
-          await addChatMessage({
-            role: "user",
-            message_type: "observation",
-            content: observationMessage,
-          });
-        } catch (error) {
-          console.error("Error during tool execution:", error);
-          break;
-        }
-      }
-    }
+app.use("/test", (req, res) => {
+  res.send("done");
+});
+app.post("/chat", async (req, res) => {
+  const { input } = req.body;
+  try {
+    const LLMResponse = await handleUserInput(input);
+    res.json({ isSuccess: true, ...formateResponse(LLMResponse) });
+  } catch (error) {
+    res.json({ isSuccess: false, reply: "something went wrong" });
   }
-}
+});
 
-main();
+app.listen(3000);
+// export const handler = ServerlessHttp(app)
