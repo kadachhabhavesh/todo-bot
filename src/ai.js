@@ -1,4 +1,4 @@
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 dotenv.config();
 import readlineSync from "readline-sync";
 import { tools } from "./tools.js";
@@ -7,8 +7,9 @@ import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
-import { SYSTEM_PROMPT } from "./constant.js";
+import { FORMATE_LLM_RESPONSE_PROMPT, SYSTEM_PROMPT } from "./constant.js";
 import { getPreviousChat } from "./service.js";
+import { formateResponse } from "./util.js";
 
 export const generateContent = async () => {
   const chatHistory = await getPreviousChat();
@@ -30,7 +31,7 @@ export const generateContent = async () => {
       contents: formatted,
     });
     let outputText = response.candidates[0].content.parts[0].text;
-    // console.log("::LLM::"+outputText);
+    console.log(":::LLM:::"+outputText);
 
     if (!outputText) {
       throw new Error("no text found in response.");
@@ -55,15 +56,18 @@ export const handleUserInput = async (userInput) => {
     while (true) {
       const result = await generateContent();
       const action = result;
-
+      
       if (action.type === "output") {
+        // const formatedOutput = await llmResponseToJson(action.output)
         await addChatMessage({
           role: "model",
           message_type: "output",
+          // content: {...action, output: formatedOutput.slice(7,formatedResponse.length-4)},
           content: action,
         });
         // console.log(`Bot >>> ${action.output}`);
-        return action.output
+        // return formatedOutput.slice(7,formatedResponse.length-4);
+        return action
         break;
       } else if (action.type === "action") {
         await addChatMessage({
@@ -95,4 +99,36 @@ export const handleUserInput = async (userInput) => {
       }
     }
   }
-}
+};
+
+export const llmResponseToJson = async (llmResponse) => {
+  const formattedLLMResponse = [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `System instructions:\n${FORMATE_LLM_RESPONSE_PROMPT}\n---\nHere is the model's raw output:\n${llmResponse}`,
+        },
+      ],
+    },
+  ];
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: formattedLLMResponse,
+    });
+    let outputText =
+      response.text && response.candidates[0].content.parts[0].text;
+    // console.log("::JSON::" + outputText);
+
+    if (!outputText) {
+      throw new Error("no text found in response.");
+    }
+
+    return outputText;
+  } catch (error) {
+    console.error("Error during AI model call:", error);
+    throw error;
+  }
+};

@@ -14,9 +14,9 @@ app.post("/chat", async (req, res) => {
   const { input } = req.body;
   try {
     const LLMResponse = await handleUserInput(input);
-    res.json({ isSuccess: true, ...formateResponse(LLMResponse) });
+    res.json({ isSuccess: true, data: LLMResponse });
   } catch (error) {
-    res.json({ isSuccess: false, reply: "something went wrong" });
+    res.json({ isSuccess: false, data: "something went wrong" });
   }
 });
 
