@@ -1,15 +1,12 @@
 import express from "express";
 import ServerlessHttp from "serverless-http";
 import { handleUserInput } from "./ai.js";
-import { formateResponse } from "./util.js";
+import cors from "cors";
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 
-app.use("/test", (req, res) => {
-  res.send("done");
-});
 app.post("/chat", async (req, res) => {
   const { input } = req.body;
   try {
@@ -20,5 +17,5 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-app.listen(3000);
+app.listen(3000); 
 // export const handler = ServerlessHttp(app)
