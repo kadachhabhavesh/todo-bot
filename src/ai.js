@@ -54,6 +54,7 @@ export const handleUserInput = async (userInput) => {
     });
 
     while (true) {
+      
       const result = await generateContent();
       const action = result;
       

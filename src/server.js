@@ -8,6 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 app.post("/chat", async (req, res) => {
+  
   const { input } = req.body;
   try {
     const LLMResponse = await handleUserInput(input);

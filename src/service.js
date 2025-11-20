@@ -6,7 +6,7 @@ const supabase = createClient(process.env.SUPABASE_API_URL, process.env.SUPABASE
 
 export const getAllTodos = async () => {
   try {
-    let { data, error } = await supabase.from("todos").select("*");
+    let { data, error } = await supabase.from("todos").select("*").order("id",{ ascending: true });
     if (error) {
       console.log(error.message);
       return "Failed to fetch todo.";
@@ -65,7 +65,7 @@ export const searchTodo = async ({ searchText = "", filters = {} }) => {
       query = query.eq("dueDate", dueDate);
     }
 
-    query = query.order("created_at", { ascending: false });
+    query = query.order("id", { ascending: true });
     const { data, error } = await query;
     if (error) {
       console.log(error.message);
