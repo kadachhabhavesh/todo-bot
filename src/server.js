@@ -2,6 +2,8 @@ import express from "express";
 import ServerlessHttp from "serverless-http";
 import { handleUserInput } from "./ai.js";
 import cors from "cors";
+import { getTodayDate } from "./service.js";
+
 
 const app = express();
 app.use(cors());

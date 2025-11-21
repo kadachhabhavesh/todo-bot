@@ -125,6 +125,12 @@ export const updateTodoDueDate = async ({ ids, dueDate }) => {
   }
 };
 
+export const getTodayDate = () => {
+  const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date()
+  return today.toISOString().split('T')[0]+' | '+today.toTimeString().split(' ')[0]+' | '+weekDays[today.getDay()];
+}
+
 
 // role = user | model 
 // message_type = input | output | action | observation

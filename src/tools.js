@@ -1,4 +1,4 @@
-import { addTodo, deleteTodoById, getAllTodos, searchTodo, updateTodoDueDate, updateTodoStatus } from "./service.js";
+import { addTodo, deleteTodoById, getAllTodos, getTodayDate, searchTodo, updateTodoDueDate, updateTodoStatus } from "./service.js";
 
 export const tools = {
   getAllTodos: getAllTodos,
@@ -6,5 +6,6 @@ export const tools = {
   deleteTodoById: deleteTodoById,
   searchTodo: searchTodo,
   updateTodoStatus: updateTodoStatus,
-  updateTodoDueDate: updateTodoDueDate
+  updateTodoDueDate: updateTodoDueDate,
+  getTodayDate: getTodayDate
 };
